@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 
-FormatDefinition = Tuple[str, str, str, Tuple[str, ...]]
+FormatDefinition = Tuple[str, str, str]
 
 
 # Does not include stuff like HTML, where the descriptive text varies
