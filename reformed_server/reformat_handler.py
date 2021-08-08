@@ -30,7 +30,9 @@ class ReformatHandler(RequestHandler):
             self.send_error(400, message=f"invalid input format: {to_format}")
             return
 
-        if (num_files := len(self.request.files)) != 1:
+        # TODO: py3.9: use walrus
+        num_files = len(self.request.files)
+        if num_files != 1:
             self.send_error(400, message=f"exactly 1 file must be passed (got {num_files})")
             return
 
