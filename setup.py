@@ -9,7 +9,7 @@ setup(
     name="reformed_server",
     version="0.1.0-develop",
 
-    python_requires="~=3.7",
+    python_requires="~=3.9",
     install_requires=[
         "tornado>=6.1,<6.2",
     ],
