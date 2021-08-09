@@ -52,7 +52,12 @@ class ReformatHandler(RequestHandler):
             # Run Pandoc on the input
             temp_out_file = pathlib.Path(td) / "pandoc-output"
             res = await asyncio.create_subprocess_exec(
-                "pandoc", str(temp_in_file), "-f", from_format, "-t", to_format, "-o", str(temp_out_file),
+                "pandoc",
+                "--pdf-engine=xelatex",  # Use xelatex to allow for Unicode characters in input
+                str(temp_in_file),
+                "-f", from_format,
+                "-t", to_format,
+                "-o", str(temp_out_file),
                 stderr=asyncio.subprocess.PIPE)
             _, stderr = await res.communicate()
 
