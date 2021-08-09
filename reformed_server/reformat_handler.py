@@ -60,6 +60,7 @@ class ReformatHandler(RequestHandler):
             if res.returncode != 0:
                 self.send_error(500, message=f"pandoc exited with a non-0 status code ({res.returncode})" +
                                              (f": {stderr.decode()}" if stderr else ""))
+                return
 
             # If everything went smoothly, return a file response in the desired format
 
