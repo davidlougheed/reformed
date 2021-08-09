@@ -74,10 +74,10 @@ class ReformatHandler(RequestHandler):
             self.set_header("Content-Length", str(os.path.getsize(temp_out_file)))
             self.set_header("Content-Type", mime_type)
 
-            with open(temp_out_file, "rb") as f:
+            with open(temp_out_file, "rb") as fh:
                 # Read the file in chunks to prevent exploding our memory
                 while True:
-                    data = f.read(CHUNK_SIZE)
+                    data = fh.read(CHUNK_SIZE)
                     if not data:
                         break
                     self.write(data)
