@@ -6,8 +6,9 @@ from tornado.web import Application
 from .format_list_handler import FormatListHandler
 from .reformat_handler import ReformatHandler
 
+from .config import MAX_BUFFER_SIZE, PORT, WORKERS
+
 API_V1 = "/api/v1"
-PORT = 8000
 
 
 def make_api_v1_app() -> Application:
@@ -22,10 +23,10 @@ def main():
         Rule(PathMatches(rf"{API_V1}.*"), make_api_v1_app()),
     ])
 
-    # TODO: Configurable max buffer size
-    server = HTTPServer(router)
-    server.listen(PORT)
-    print(f"reformed server listening on {PORT}")
+    server = HTTPServer(router, max_buffer_size=MAX_BUFFER_SIZE)
+    server.bind(PORT)
+    print(f"reformed listening on {PORT}; workers={WORKERS}")
+    server.start(WORKERS)
     IOLoop.current().start()
 
 
