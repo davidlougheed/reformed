@@ -10,6 +10,7 @@ from .pandoc_spec import INPUT_FORMATS, OUTPUT_FORMATS
 __all__ = ["ReformatHandler"]
 
 CHUNK_SIZE = 16 * 1024
+DOCUMENT_KEY = "document"
 
 
 # Tornado's type hinting stuff is messed up
@@ -31,16 +32,16 @@ class ReformatHandler(RequestHandler):
             return
 
         # TODO: py3.9: use walrus
-        num_files = len(self.request.files)
+        num_files = len(self.request.files.get(DOCUMENT_KEY, ()))
         if num_files != 1:
-            self.send_error(400, message=f"exactly 1 file must be passed (got {num_files})")
+            self.send_error(400, message=f"exactly 1 document must be passed (got {num_files})")
             return
 
         # Parameters look good to go, so create a temporary directory to do
         # some work in - time to convert the document!
 
         with tempfile.TemporaryDirectory() as td:
-            input_file = self.request.files[0]
+            input_file = self.request.files[DOCUMENT_KEY][0]
 
             # Write the POSTed body to the file system, using a non-user-passed
             # file name to prevent anything malicious or annoying.
