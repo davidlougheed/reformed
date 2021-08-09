@@ -12,14 +12,14 @@ FormatDefinition = Tuple[str, str, str]
 # Does not include stuff like HTML, where the descriptive text varies
 # between input and output.
 COMMON_FORMAT_DEFINITIONS: Dict[str, FormatDefinition] = {
-    # Disabled because we don't currently support additional file uploads for --bibliography
+    # Disabled because we don't currently support additional file uploads for --bibliography (?) TODO
     # "bibtex": "BibTeX bibliography",
     # "biblatex": "BibLaTeX bibliography",
 
     "commonmark": ("text/markdown", "md", "CommonMark Markdown"),
     "commonmark_x": ("text/markdown", "md", "CommonMark Markdown with extensions"),
 
-    # Disabled because we don't currently support additional file uploads for --csl
+    # Disabled because we don't currently support additional file uploads for --csl (?) TODO
     # "csljson": "CSL JSON bibliography",
 
     "docx": ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx", "Word docx"),
@@ -55,7 +55,7 @@ INPUT_FORMATS: Dict[str, FormatDefinition] = {
     "epub": ("application/epub+zip", "epub", "EPUB"),
     "html": ("text/html", "html", "HTML"),
 
-    # Unsure about how this is handled
+    # Unsure about how this is handled TODO
     # "jats": "JATS XML",
 
     "t2t": ("text/plain", "txt", "txt2tags"),
@@ -84,7 +84,7 @@ OUTPUT_FORMATS: Dict[str, FormatDefinition] = {
 
     # "icml": ("application/zip", "icml", "InDesign ICML"),  # TODO: Cannot find the mime type on this guy
 
-    # Unsure about how these are handled
+    # Unsure about how these are handled TODO
     # "jats": "JATS XML, Archiving and Interchange Tag Set",
     # "jats_archiving": "JATS XML, Archiving and Interchange Tag Set",
     # "jats_articleauthoring": "JATS XML, Article Authoring Tag Set",
@@ -104,7 +104,7 @@ OUTPUT_FORMATS: Dict[str, FormatDefinition] = {
     "revealjs": ("text/html", "html", "reveal.js HTML5 + JavaScript slide show"),
     "s5": ("text/html", "html", "S5 HTML and JavaScript slide show"),
 
-    # Unsure about how this is handled
+    # Unsure about how this is handled TODO
     # "tei": "TEI Simple",
 
     "xwiki": ("text/plain", "txt", "XWiki markup"),
