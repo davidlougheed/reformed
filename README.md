@@ -68,6 +68,9 @@ A binary stream with the MIME type specified in the list of formats.
 `Content-Disposition` is forced to be an `attachment` to prevent files from rendering in
 the browser.
 
+If an error is encountered, this will instead be a JSON response with an `error` key 
+specifying what went wrong.
+
 
 ## Configuration
 
