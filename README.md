@@ -5,6 +5,7 @@
 Document format conversion service based on Pandoc.
 
 
+
 ## Usage
 
 The API specification for the Reformed server is as follows:
@@ -138,6 +139,7 @@ If an error is encountered, this will instead be a JSON response with an `error`
 specifying what went wrong.
 
 
+
 ## Configuration
 
 A few configuration environment variables are available for the Reformed server,
@@ -156,6 +158,7 @@ REFORMED_WORKERS=2
 ```
 
 
+
 ## Deploying
 
 Main-branch and tagged releases are both automatically published as Docker images to the
@@ -164,3 +167,15 @@ and expose a Tornado HTTP server on port 8000.
 
 See [the package listing](https://github.com/davidlougheed/reformed/pkgs/container/reformed)
 for more information on pulling the image.
+
+
+
+## Developing and Testing
+
+The development requirements are specified in `requirements.dev.txt`.
+
+To test with coverage, use the following command:
+
+```bash
+coverage run -m unittest -v
+```

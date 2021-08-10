@@ -1,3 +1,4 @@
+coverage==5.5
 flake8==3.9.2
 mccabe==0.6.1
 pycodestyle==2.7.0
