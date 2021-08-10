@@ -42,7 +42,7 @@ class ReformatHandler(RequestHandler):
             return
 
         if to_format not in OUTPUT_FORMATS:
-            self.send_error(400, message=f"invalid input format: {to_format}")
+            self.send_error(400, message=f"invalid output format: {to_format}")
             return
 
         # TODO: py3.9: use walrus
