@@ -55,12 +55,64 @@ The API specification for the Reformed server is as follows:
 
 #### Request
 
-Takes one file input called `document`. For example, to convert a `docx` file to a `pdf` 
+The request should be made with the `multipart/form-data` encoding.
+
+##### Parameters
+
+The request parameters are as follows:
+
+###### File `document`
+
+Document to convert. For example, to convert a `docx` file to a `pdf`
 file, the following cURL command will work:
 
 ```bash
 curl -X POST -F 'document=@test.docx' http://localhost:8000/api/v1/from/docx/to/pdf > test.pdf
 ```
+
+###### Boolean flags
+
+This endpoint supports the following Pandoc standalone flags:
+`ascii`, `html-q-tags`, `incremental`, `listings`, `no-highlight`, `preserve-tabs`, 
+`reference-links`, `section-divs`, `standalone`, `strip-comments`, `toc`.
+
+If the form value for a given flag is anything except a blank string, it will be added to 
+the Pandoc call.
+
+See [the Pandoc manual](https://pandoc.org/MANUAL.html) for more information on these
+flags' effects.
+
+###### Flags with choices
+
+This endpoint supports the following Pandoc flags which have specific choices:
+`eol`, `markdown-headings`, `reference-location`, `top-level-division`, `track-changes`, 
+`wrap`.
+
+If the form value for a given flag is valid, it will be added to the Pandoc call.
+
+See [the Pandoc manual](https://pandoc.org/MANUAL.html) for more information on these
+flags' effects.
+
+###### Integer `columns`
+
+If specified and a valid integer, this will add the `--columns=XX` option to the Pandoc 
+call. The value is bounded to `1 <= columns <= 300` by Reformed.
+
+See [the Pandoc manual's description](https://pandoc.org/MANUAL.html#option--columns) for more.
+
+###### Integer `dpi`
+
+If specified and a valid integer, this will add the `--dpi=XX` option to the Pandoc call.
+The value is bounded to `36 <= dpi <= 600` by Reformed.
+
+See [the Pandoc manual's description](https://pandoc.org/MANUAL.html#option--dpi) for more.
+
+###### Integer `toc-depth`
+
+If specified and a valid integer, this will add the `--toc-depth=XX` option to the Pandoc 
+call. The value is bounded to `1 <= toc-depth <= 6` by Reformed.
+
+See [the Pandoc manual's description](https://pandoc.org/MANUAL.html#option--toc-depth) for more.
 
 #### Response
 
