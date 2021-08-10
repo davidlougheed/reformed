@@ -6,7 +6,7 @@ import zipfile
 
 from itertools import chain
 from tornado.web import RequestHandler
-from typing import List, Optional, Union
+from typing import Any, Coroutine, List, Optional, Union
 
 from .pandoc_spec import INPUT_FORMATS, OUTPUT_FORMATS
 
@@ -14,6 +14,9 @@ __all__ = ["ReformatHandler"]
 
 CHUNK_SIZE = 16 * 1024
 DOCUMENT_KEY = "document"
+
+IN_FILE_PATH = "./pandoc-input"
+OUT_FILE_PATH = "./pandoc-output"
 
 
 def _get_arg(body: dict, key: str) -> Optional[Union[str, List[str]]]:
@@ -25,6 +28,62 @@ def _get_arg(body: dict, key: str) -> Optional[Union[str, List[str]]]:
         return v or None
     else:
         return v
+
+
+def run_pandoc(to_format, from_format, body) -> Coroutine[Any, Any, asyncio.subprocess.Process]:
+    def bool_flag(f: str) -> tuple:
+        return (f"--{f}",) if _get_arg(body, f) else ()
+
+    def choices_flag(f: str, *options) -> tuple:
+        v = _get_arg(body, f)
+        return (f"--{f}={v}",) if v in options else ()
+
+    def int_flag(f: str, min_: int, max_: int) -> tuple:
+        sv = _get_arg(body, f)
+        try:
+            pv = min(max(int(sv), min_), max_)
+            return f"--{f}={pv}",  # Leave the trailing comma
+        except (TypeError, ValueError):  # Blank, None, or other non-int
+            return ()
+
+    return asyncio.create_subprocess_exec(
+        "pandoc",
+
+        # General options
+        #  - System-set flags
+        "--pdf-engine=xelatex",  # Use xelatex to allow for Unicode characters in input
+        "--extract-media=.",
+        #  - User-set flags
+        *chain.from_iterable(map(bool_flag, (
+            "ascii",
+            "no-highlight",
+            "html-q-tags",
+            "incremental",
+            "listings",
+            "preserve-tabs",
+            "reference-links",
+            "section-divs",
+            "standalone",
+            "strip-comments",
+            "toc",
+        ))),
+        *int_flag("columns", 1, 300),
+        *int_flag("dpi", 36, 600),
+        *int_flag("toc-depth", 1, 6),
+        *choices_flag("eol", "crlf", "lf", "native"),
+        *choices_flag("markdown-headings", "atx", "setext"),
+        *choices_flag("reference-location", "block", "section", "document"),
+        *choices_flag("top-level-division", "default", "section", "chapter", "part"),
+        *choices_flag("track-changes", "accept", "reject", "all"),
+        *choices_flag("wrap", "auto", "none", "preserve"),
+
+        # Input-related options
+        IN_FILE_PATH,
+        "-f", from_format,
+        "-t", to_format,
+        "-o", OUT_FILE_PATH,
+
+        stderr=asyncio.subprocess.PIPE)
 
 
 # Tornado's type hinting stuff is messed up
@@ -53,86 +112,30 @@ class ReformatHandler(RequestHandler):
 
         body = self.request.body_arguments or {}
 
-        def bool_flag(f: str) -> tuple:
-            return (f"--{f}",) if _get_arg(body, f) else ()
-
-        def choices_flag(f: str, *options) -> tuple:
-            v = _get_arg(body, f)
-            return (f"--{f}={v}",) if v in options else ()
-
-        def int_flag(f: str, min_: int, max_: int) -> tuple:
-            sv = _get_arg(body, f)
-            try:
-                pv = min(max(int(sv), min_), max_)
-                return f"--{f}={pv}",  # Leave the trailing comma
-            except (TypeError, ValueError):  # Blank, None, or other non-int
-                return ()
-
-        send_as_bundle = bool_flag("bundle")
+        send_as_bundle = _get_arg(body, "bundle")
 
         # Parameters look good to go, so create a temporary directory to do
         # some work in - time to convert the document!
 
         with tempfile.TemporaryDirectory() as td:
+            os.chdir(td)  # Need this to be the working directory or it'll break media links in the output
+
             in_file = self.request.files[DOCUMENT_KEY][0]
 
             # Output mime type and file extension
             out_mime_type, out_file_ext, _ = OUTPUT_FORMATS[to_format]
 
-            os.chdir(td)  # Need this to be the working directory or it'll break media links in the output
-            in_file_path = "./pandoc-input"
-            out_file_path = "./pandoc-output"
-
             # Write the POSTed body to the file system, using a non-user-passed
             # file name to prevent anything malicious or annoying.
 
-            with open(in_file_path, "wb") as fh:
+            with open(IN_FILE_PATH, "wb") as fh:
                 fh.write(in_file["body"])
 
             # Run Pandoc on the input
-
-            res = await asyncio.create_subprocess_exec(
-                "pandoc",
-
-                # General options
-                #  - System-set flags
-                "--pdf-engine=xelatex",  # Use xelatex to allow for Unicode characters in input
-                f"--extract-media=.",
-                #  - User-set flags
-                *chain.from_iterable(map(bool_flag, (
-                    "ascii",
-                    "no-highlight",
-                    "html-q-tags",
-                    "incremental",
-                    "listings",
-                    "preserve-tabs",
-                    "reference-links",
-                    "section-divs",
-                    "standalone",
-                    "strip-comments",
-                    "toc",
-                ))),
-                *int_flag("columns", 1, 300),
-                *int_flag("dpi", 36, 600),
-                *int_flag("toc-depth", 1, 6),
-                *choices_flag("eol", "crlf", "lf", "native"),
-                *choices_flag("markdown-headings", "atx", "setext"),
-                *choices_flag("reference-location", "block", "section", "document"),
-                *choices_flag("top-level-division", "default", "section", "chapter", "part"),
-                *choices_flag("track-changes", "accept", "reject", "all"),
-                *choices_flag("wrap", "auto", "none", "preserve"),
-
-                # Input-related options
-                str(in_file_path),
-                "-f", from_format,
-                "-t", to_format,
-                "-o", str(out_file_path),
-
-                stderr=asyncio.subprocess.PIPE)
-
+            res = await run_pandoc(to_format, from_format, body)
             _, stderr = await res.communicate()
 
-            # If Pandoc hit an error, return the error text (if present) to the requester
+            # - If Pandoc hit an error, return the error text (if present) to the requester
             if res.returncode != 0:
                 self.send_error(500, message=f"pandoc exited with a non-0 status code ({res.returncode})" +
                                              (f": {stderr.decode()}" if stderr else ""))
@@ -162,7 +165,7 @@ class ReformatHandler(RequestHandler):
 
                 # Prepare the zip bundle
                 with zipfile.ZipFile(bundle_path, mode="w") as zf:
-                    zf.write(out_file_path, new_name)
+                    zf.write(OUT_FILE_PATH, new_name)
                     for mp in media_contents:
                         zf.write(media_path / mp, f"media/{mp}")
 
@@ -180,4 +183,4 @@ class ReformatHandler(RequestHandler):
             # After this, send the bytes of the document.
             self.set_header("Content-Disposition", f"attachment; filename=\"{new_name}\"")
             self.set_header("Content-Type", out_mime_type)
-            send_in_chunks(out_file_path)
+            send_in_chunks(OUT_FILE_PATH)
