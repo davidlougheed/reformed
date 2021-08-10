@@ -4,6 +4,7 @@ import pathlib
 import tempfile
 import zipfile
 
+from itertools import chain
 from tornado.web import RequestHandler
 from typing import List, Optional, Union
 
@@ -98,23 +99,25 @@ class ReformatHandler(RequestHandler):
                 "--pdf-engine=xelatex",  # Use xelatex to allow for Unicode characters in input
                 f"--extract-media=.",
                 #  - User-set flags
-                *bool_flag("ascii"),
-                *bool_flag("no-highlight"),
+                *chain.from_iterable(map(bool_flag, (
+                    "ascii",
+                    "no-highlight",
+                    "html-q-tags",
+                    "incremental",
+                    "listings",
+                    "preserve-tabs",
+                    "reference-links",
+                    "section-divs",
+                    "standalone",
+                    "strip-comments",
+                    "toc",
+                ))),
                 *int_flag("columns", 1, 300),
                 *int_flag("dpi", 36, 600),
-                *choices_flag("eol", "crlf", "lf", "native"),
-                *bool_flag("html-q-tags"),
-                *bool_flag("incremental"),
-                *bool_flag("listings"),
-                *choices_flag("markdown-headings", "atx", "setext"),
-                *bool_flag("preserve-tabs"),
-                *bool_flag("reference-links"),
-                *choices_flag("reference-location", "block", "section", "document"),
-                *bool_flag("section-divs"),
-                *bool_flag("standalone"),
-                *bool_flag("strip-comments"),
-                *bool_flag("toc"),
                 *int_flag("toc-depth", 1, 6),
+                *choices_flag("eol", "crlf", "lf", "native"),
+                *choices_flag("markdown-headings", "atx", "setext"),
+                *choices_flag("reference-location", "block", "section", "document"),
                 *choices_flag("top-level-division", "default", "section", "chapter", "part"),
                 *choices_flag("track-changes", "accept", "reject", "all"),
                 *choices_flag("wrap", "auto", "none", "preserve"),
