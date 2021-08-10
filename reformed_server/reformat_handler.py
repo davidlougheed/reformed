@@ -15,6 +15,7 @@ __all__ = ["ReformatHandler"]
 CHUNK_SIZE = 16 * 1024
 DOCUMENT_KEY = "document"
 
+BUNDLE_PATH = "./bundle.zip"
 IN_FILE_PATH = "./pandoc-input"
 OUT_FILE_PATH = "./pandoc-output"
 
@@ -86,6 +87,16 @@ def run_pandoc(to_format, from_format, body) -> Coroutine[Any, Any, asyncio.subp
         stderr=asyncio.subprocess.PIPE)
 
 
+def prepare_zip_bundle(out_name: str):
+    media_path = pathlib.Path("media")
+    media_contents = os.listdir(media_path) if os.path.isdir(media_path) else []
+
+    with zipfile.ZipFile(BUNDLE_PATH, mode="w") as zf:
+        zf.write(OUT_FILE_PATH, out_name)
+        for mp in media_contents:
+            zf.write(media_path / mp, f"media/{mp}")
+
+
 # Tornado's type hinting stuff is messed up
 # noinspection PyAbstractClass
 class ReformatHandler(RequestHandler):
@@ -112,8 +123,6 @@ class ReformatHandler(RequestHandler):
 
         body = self.request.body_arguments or {}
 
-        send_as_bundle = _get_arg(body, "bundle")
-
         # Parameters look good to go, so create a temporary directory to do
         # some work in - time to convert the document!
 
@@ -121,9 +130,6 @@ class ReformatHandler(RequestHandler):
             os.chdir(td)  # Need this to be the working directory or it'll break media links in the output
 
             in_file = self.request.files[DOCUMENT_KEY][0]
-
-            # Output mime type and file extension
-            out_mime_type, out_file_ext, _ = OUTPUT_FORMATS[to_format]
 
             # Write the POSTed body to the file system, using a non-user-passed
             # file name to prevent anything malicious or annoying.
@@ -156,24 +162,15 @@ class ReformatHandler(RequestHandler):
                             break
                         self.write(data)
 
-            media_path = pathlib.Path("media")
-            media_contents = os.listdir(media_path) if os.path.isdir(media_path) else []
+            # Output mime type and file extension
+            out_mime_type, out_file_ext, _ = OUTPUT_FORMATS[to_format]
+
             new_name = f"{os.path.splitext(in_file['filename'])[0]}.{out_file_ext}"
+            send_as_bundle = _get_arg(body, "bundle")
 
             if send_as_bundle:
-                bundle_path = "./bundle.zip"
-
-                # Prepare the zip bundle
-                with zipfile.ZipFile(bundle_path, mode="w") as zf:
-                    zf.write(OUT_FILE_PATH, new_name)
-                    for mp in media_contents:
-                        zf.write(media_path / mp, f"media/{mp}")
-
-                # Prepare the return request and send the bytes of the zip file
-                self.set_header("Content-Disposition", "attachment; filename=\"bundle.zip\"")
-                self.set_header("Content-Type", "application/zip")
-                send_in_chunks(bundle_path)
-                return
+                # Prepare a .zip archive with the document output + media files (if present)
+                prepare_zip_bundle(new_name)
 
             # These headers force the file to not get rendered in-browser,
             # since some Pandoc output formats are renderable either as plain
@@ -181,6 +178,7 @@ class ReformatHandler(RequestHandler):
             # Manually setting the Content-Length header lets users see how big
             # the file they're downloading is.
             # After this, send the bytes of the document.
-            self.set_header("Content-Disposition", f"attachment; filename=\"{new_name}\"")
-            self.set_header("Content-Type", out_mime_type)
-            send_in_chunks(OUT_FILE_PATH)
+            name_to_send = "bundle.zip" if send_as_bundle else new_name
+            self.set_header("Content-Disposition", f"attachment; filename=\"{name_to_send}\"")
+            self.set_header("Content-Type", "application/zip" if send_as_bundle else out_mime_type)
+            send_in_chunks(BUNDLE_PATH if send_as_bundle else OUT_FILE_PATH)
