@@ -70,7 +70,21 @@ file, the following cURL command will work:
 curl -X POST -F 'document=@test.docx' http://localhost:8000/api/v1/from/docx/to/pdf > test.pdf
 ```
 
-###### Boolean flags
+###### Boolean `bundle`
+
+Whether to bundle the created document and any media (extracted pictures from e.g. a 
+`.docx` file) together in a `.zip` archive.
+
+If the form value for this option is anything except a blank string, it will be treated
+as `True`.
+
+If no media is generated and this option is set, this will return the reformatted 
+document in a `.zip` archive by itself.
+
+If media is generated and this option is not set, any extracted media will be discarded
+and just the document will be returned.
+
+###### Boolean Pandoc flags
 
 This endpoint supports the following Pandoc standalone flags:
 `ascii`, `html-q-tags`, `incremental`, `listings`, `no-highlight`, `preserve-tabs`, 
@@ -82,7 +96,7 @@ the Pandoc call.
 See [the Pandoc manual](https://pandoc.org/MANUAL.html) for more information on these
 flags' effects.
 
-###### Flags with choices
+###### Pandoc flags with choices
 
 This endpoint supports the following Pandoc flags which have specific choices:
 `eol`, `markdown-headings`, `reference-location`, `top-level-division`, `track-changes`, 
@@ -93,21 +107,21 @@ If the form value for a given flag is valid, it will be added to the Pandoc call
 See [the Pandoc manual](https://pandoc.org/MANUAL.html) for more information on these
 flags' effects.
 
-###### Integer `columns`
+###### Integer `columns` (Pandoc option)
 
 If specified and a valid integer, this will add the `--columns=XX` option to the Pandoc 
 call. The value is bounded to `1 <= columns <= 300` by Reformed.
 
 See [the Pandoc manual's description](https://pandoc.org/MANUAL.html#option--columns) for more.
 
-###### Integer `dpi`
+###### Integer `dpi` (Pandoc option)
 
 If specified and a valid integer, this will add the `--dpi=XX` option to the Pandoc call.
 The value is bounded to `36 <= dpi <= 600` by Reformed.
 
 See [the Pandoc manual's description](https://pandoc.org/MANUAL.html#option--dpi) for more.
 
-###### Integer `toc-depth`
+###### Integer `toc-depth` (Pandoc option)
 
 If specified and a valid integer, this will add the `--toc-depth=XX` option to the Pandoc 
 call. The value is bounded to `1 <= toc-depth <= 6` by Reformed.

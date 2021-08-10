@@ -2,6 +2,7 @@ import asyncio
 import os
 import pathlib
 import tempfile
+import zipfile
 
 from tornado.web import RequestHandler
 from typing import List, Optional, Union
@@ -66,20 +67,26 @@ class ReformatHandler(RequestHandler):
             except (TypeError, ValueError):  # Blank, None, or other non-int
                 return ()
 
+        send_as_bundle = bool_flag("bundle")
+
         # Parameters look good to go, so create a temporary directory to do
         # some work in - time to convert the document!
 
         with tempfile.TemporaryDirectory() as td:
-            input_file = self.request.files[DOCUMENT_KEY][0]
+            in_file = self.request.files[DOCUMENT_KEY][0]
 
-            temp_in_file = pathlib.Path(td) / "pandoc-input"
-            temp_out_file = pathlib.Path(td) / "pandoc-output"
+            # Output mime type and file extension
+            out_mime_type, out_file_ext, _ = OUTPUT_FORMATS[to_format]
+
+            os.chdir(td)  # Need this to be the working directory or it'll break media links in the output
+            in_file_path = "./pandoc-input"
+            out_file_path = "./pandoc-output"
 
             # Write the POSTed body to the file system, using a non-user-passed
             # file name to prevent anything malicious or annoying.
 
-            with open(temp_in_file, "wb") as fh:
-                fh.write(input_file["body"])
+            with open(in_file_path, "wb") as fh:
+                fh.write(in_file["body"])
 
             # Run Pandoc on the input
 
@@ -87,7 +94,10 @@ class ReformatHandler(RequestHandler):
                 "pandoc",
 
                 # General options
+                #  - System-set flags
                 "--pdf-engine=xelatex",  # Use xelatex to allow for Unicode characters in input
+                f"--extract-media=.",
+                #  - User-set flags
                 *bool_flag("ascii"),
                 *bool_flag("no-highlight"),
                 *int_flag("columns", 1, 300),
@@ -110,10 +120,10 @@ class ReformatHandler(RequestHandler):
                 *choices_flag("wrap", "auto", "none", "preserve"),
 
                 # Input-related options
-                str(temp_in_file),
+                str(in_file_path),
                 "-f", from_format,
                 "-t", to_format,
-                "-o", str(temp_out_file),
+                "-o", str(out_file_path),
 
                 stderr=asyncio.subprocess.PIPE)
 
@@ -126,23 +136,45 @@ class ReformatHandler(RequestHandler):
                 return
 
             # If everything went smoothly, return a file response in the desired format
+            # unless any media were extracted, in which case return a zip bundle with the
+            # file (using our name, not theirs) and the media folder.
 
-            mime_type, file_ext, _ = OUTPUT_FORMATS[to_format]
-            new_name = f"{os.path.splitext(input_file['filename'])[0]}.{file_ext}"
+            def send_in_chunks(fp):
+                self.set_header("Content-Length", str(os.path.getsize(fp)))
+
+                with open(fp, "rb") as cfh:
+                    # Read the file in chunks to prevent exploding our memory
+                    while True:  # TODO: py3.9: walrus operator
+                        data = cfh.read(CHUNK_SIZE)
+                        if not data:
+                            break
+                        self.write(data)
+
+            media_path = pathlib.Path("media")
+            media_contents = os.listdir(media_path) if os.path.isdir(media_path) else []
+            new_name = f"{os.path.splitext(in_file['filename'])[0]}.{out_file_ext}"
+
+            if send_as_bundle:
+                bundle_path = "./bundle.zip"
+
+                # Prepare the zip bundle
+                with zipfile.ZipFile(bundle_path, mode="w") as zf:
+                    zf.write(out_file_path, new_name)
+                    for mp in media_contents:
+                        zf.write(media_path / mp, f"media/{mp}")
+
+                # Prepare the return request and send the bytes of the zip file
+                self.set_header("Content-Disposition", "attachment; filename=\"bundle.zip\"")
+                self.set_header("Content-Type", "application/zip")
+                send_in_chunks(bundle_path)
+                return
 
             # These headers force the file to not get rendered in-browser,
             # since some Pandoc output formats are renderable either as plain
             # text or actually will be viewable (e.g. html)
             # Manually setting the Content-Length header lets users see how big
             # the file they're downloading is.
+            # After this, send the bytes of the document.
             self.set_header("Content-Disposition", f"attachment; filename=\"{new_name}\"")
-            self.set_header("Content-Length", str(os.path.getsize(temp_out_file)))
-            self.set_header("Content-Type", mime_type)
-
-            with open(temp_out_file, "rb") as fh:
-                # Read the file in chunks to prevent exploding our memory
-                while True:
-                    data = fh.read(CHUNK_SIZE)
-                    if not data:
-                        break
-                    self.write(data)
+            self.set_header("Content-Type", out_mime_type)
+            send_in_chunks(out_file_path)
