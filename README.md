@@ -89,8 +89,9 @@ and just the document will be returned.
 ###### Boolean Pandoc flags
 
 This endpoint supports the following Pandoc standalone flags:
-`ascii`, `html-q-tags`, `incremental`, `listings`, `no-highlight`, `preserve-tabs`, 
-`reference-links`, `section-divs`, `standalone`, `strip-comments`, `toc`.
+`ascii`, `gladtex`, `html-q-tags`, `incremental`, `listings`, `mathml`, `no-highlight`, 
+`number-sections`, `preserve-tabs`, `reference-links`, `section-divs`, `standalone`, 
+`strip-comments`, `toc`.
 
 If the form value for a given flag is anything except a blank string, it will be added to 
 the Pandoc call.

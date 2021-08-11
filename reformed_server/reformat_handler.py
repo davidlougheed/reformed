@@ -57,10 +57,13 @@ def run_pandoc(to_format, from_format, body) -> Coroutine[Any, Any, asyncio.subp
         #  - User-set flags
         *chain.from_iterable(map(bool_flag, (
             "ascii",
-            "no-highlight",
+            "gladtex",
             "html-q-tags",
             "incremental",
             "listings",
+            "mathml",
+            "no-highlight",
+            "number-sections",
             "preserve-tabs",
             "reference-links",
             "section-divs",
@@ -103,6 +106,17 @@ class ReformatHandler(RequestHandler):
     def write_error(self, status_code: int, **kwargs: dict) -> None:
         message = kwargs.get("message", "")
         self.write({"code": status_code, **({"error": message} if message else {})})
+
+    def send_in_chunks(self, fp):
+        self.set_header("Content-Length", str(os.path.getsize(fp)))
+
+        with open(fp, "rb") as cfh:
+            # Read the file in chunks to prevent exploding our memory
+            while True:  # TODO: py3.9: walrus operator
+                data = cfh.read(CHUNK_SIZE)
+                if not data:
+                    break
+                self.write(data)
 
     async def post(self, from_format: str, to_format: str):
         # Handle input errors first
@@ -151,17 +165,6 @@ class ReformatHandler(RequestHandler):
             # unless any media were extracted, in which case return a zip bundle with the
             # file (using our name, not theirs) and the media folder.
 
-            def send_in_chunks(fp):
-                self.set_header("Content-Length", str(os.path.getsize(fp)))
-
-                with open(fp, "rb") as cfh:
-                    # Read the file in chunks to prevent exploding our memory
-                    while True:  # TODO: py3.9: walrus operator
-                        data = cfh.read(CHUNK_SIZE)
-                        if not data:
-                            break
-                        self.write(data)
-
             # Output mime type and file extension
             out_mime_type, out_file_ext, _ = OUTPUT_FORMATS[to_format]
 
@@ -181,4 +184,4 @@ class ReformatHandler(RequestHandler):
             name_to_send = "bundle.zip" if send_as_bundle else new_name
             self.set_header("Content-Disposition", f"attachment; filename=\"{name_to_send}\"")
             self.set_header("Content-Type", "application/zip" if send_as_bundle else out_mime_type)
-            send_in_chunks(BUNDLE_PATH if send_as_bundle else OUT_FILE_PATH)
+            self.send_in_chunks(BUNDLE_PATH if send_as_bundle else OUT_FILE_PATH)
