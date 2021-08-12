@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="reformed_server",
-    version="0.1.0-develop",
+    version="0.1.0",
 
     python_requires="~=3.8",
     install_requires=[
