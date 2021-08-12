@@ -20,6 +20,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Apt dependencies
+      run: sudo apt-get install -y texlive-xetex
     - name: Install Pandoc
       run: |
         wget https://github.com/jgm/pandoc/releases/download/2.14.1/pandoc-2.14.1-1-amd64.deb
