@@ -2,6 +2,7 @@
 
 [![Lint Status](https://github.com/davidlougheed/reformed/workflows/Lint/badge.svg?branch=main)](https://github.com/davidlougheed/reformed/actions?query=workflow%3ALint+branch%3Amain)
 [![Test Status](https://github.com/davidlougheed/reformed/workflows/Tests/badge.svg?branch=main)](https://github.com/davidlougheed/reformed/actions?query=workflow%3ATests+branch%3Amain)
+[![codecov](https://codecov.io/gh/davidlougheed/reformed/branch/main/graph/badge.svg?token=8MAIMCYOCB)](https://codecov.io/gh/davidlougheed/reformed)
 
 Document format conversion service based on Pandoc.
 
