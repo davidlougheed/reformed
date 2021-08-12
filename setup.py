@@ -29,5 +29,5 @@ setup(
     author="David Lougheed",
     author_email="david.lougheed@gmail.com",
 
-    packages=find_packages(),
+    packages=find_packages(exclude="tests"),
 )
