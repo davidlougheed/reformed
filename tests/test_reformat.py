@@ -1,3 +1,4 @@
+import json
 import pathlib
 # Tornado is annoying and doesn't encode form data for us, so we use requests just in testing
 import requests
@@ -53,7 +54,10 @@ class ReformatTests(AsyncHTTPTestCase):
                 self.get_url(f"{API_V1}/from/docx/to/pdf"),
                 method="POST",
                 body=b.body,
-                headers=b.headers)
+                headers=b.headers,
+                raise_error=False)
+            if r.code != 200:
+                print(json.loads(r.body))
             self.assertEqual(r.code, 200)
             self.assertEqual(r.headers["Content-Type"], "application/pdf")
 
@@ -69,7 +73,10 @@ class ReformatTests(AsyncHTTPTestCase):
                 self.get_url(f"{API_V1}/from/docx/to/html"),
                 method="POST",
                 body=b.body,
-                headers=b.headers)
+                headers=b.headers,
+                raise_error=False)
+            if r.code != 200:
+                print(json.loads(r.body))
             self.assertEqual(r.code, 200)
             self.assertEqual(r.headers["Content-Type"], "application/zip")
             # TODO: inspect zip
