@@ -1,0 +1,9 @@
+.coverage
+.coveragerc
+.flake8
+.gitignore
+requirements.dev.txt
+/.github
+/env
+/htmlcov
+/tests
