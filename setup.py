@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="reformed_server",
+    name="reformed",
     version="0.1.0",
 
     python_requires="~=3.8",

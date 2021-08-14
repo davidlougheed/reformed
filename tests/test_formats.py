@@ -2,10 +2,10 @@ import json
 
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
-from reformed_server.server import API_V1, make_api_v1_app
+from reformed.server import API_V1, make_api_v1_app
 
 
-from reformed_server.pandoc_spec import INPUT_FORMATS, OUTPUT_FORMATS
+from reformed.pandoc_spec import INPUT_FORMATS, OUTPUT_FORMATS
 
 
 class FormatListTests(AsyncHTTPTestCase):

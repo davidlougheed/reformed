@@ -19,4 +19,4 @@ RUN pip install .
 EXPOSE 8000
 
 ENTRYPOINT []
-CMD [ "python", "-m", "reformed_server.server" ]
+CMD [ "python", "-m", "reformed.server" ]

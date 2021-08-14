@@ -5,7 +5,7 @@ import requests
 
 from tornado.testing import AsyncHTTPTestCase, gen_test
 from tornado.web import Application
-from reformed_server.server import API_V1, make_api_v1_app
+from reformed.server import API_V1, make_api_v1_app
 
 DOCX_FILE = pathlib.Path(__file__).parent.resolve() / "documents/test1.docx"
 

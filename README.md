@@ -186,5 +186,5 @@ coverage run -m unittest -v
 To run the linter, use the following command:
 
 ```bash
-flake8 reformed_server
+flake8 reformed
 ```

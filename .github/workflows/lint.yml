@@ -26,4 +26,4 @@ jobs:
         run: pip install -r requirements.dev.txt
 
       - name: Lint
-        run: flake8 reformed_server/
+        run: flake8 reformed/
