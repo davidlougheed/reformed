@@ -1,5 +1,11 @@
 FROM pandoc/latex:2.14.1
 
+LABEL maintainer="David Lougheed <david.lougheed@gmail.com>" \
+    org.opencontainers.image.title="reformed" \
+    org.opencontainers.image.description="A document format conversion service based on Pandoc." \
+    org.opencontainers.image.authors="David Lougheed <david.lougheed@gmail.com>" \
+    org.opencontainers.image.licenses="GPLv3"
+
 ENV PYTHONUNBUFFERED 1
 
 RUN apk add --update --no-cache python3 &&  \
