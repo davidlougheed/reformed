@@ -11,7 +11,7 @@ setup(
 
     python_requires="~=3.8",
     install_requires=[
-        "tornado>=6.1,<6.2",
+        "tornado>=6.2,<6.3",
     ],
 
     description="Document format conversion service based on Pandoc.",
