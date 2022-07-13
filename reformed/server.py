@@ -1,3 +1,5 @@
+import sys
+from shutil import which
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.routing import PathMatches, Rule, RuleRouter
@@ -28,6 +30,10 @@ def main():
     router = RuleRouter([
         Rule(PathMatches(rf"{API_V1}.*"), make_api_v1_app()),
     ])
+
+    if not which("pandoc"):
+        print("Error: missing pandoc executable", file=sys.stderr)
+        exit(1)
 
     server = HTTPServer(router, max_buffer_size=MAX_BUFFER_SIZE)
     server.bind(PORT)
